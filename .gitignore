@@ -1,0 +1,18 @@
+### Java ###
+# Compile class file
+*.class
+
+# log file
+*.log
+
+## Gradle ##
+/build/
+/gradle/
+/.gradle/
+settings.gradle
+/gradlew/
+gradlew.bat
+gradlew
+
+## IntelliJ ##
+/.idea/

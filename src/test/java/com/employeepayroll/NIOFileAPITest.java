@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.stream.IntStream;
 
 public class NIOFileAPITest {
@@ -51,5 +52,20 @@ public class NIOFileAPITest {
         Path dir = Paths.get(HOME+"/"+PLAY_WITH_NIO);
         Files.list(dir).filter(Files::isRegularFile).forEach(System.out::println);
         new Java8WatchServiceExample(dir).processEvents();
+    }
+
+    @Test
+    public void given3EmployeesWhenWrittenToFileShouldMatchEmployeeEntries(){
+        EmployeePayrollData[] arrayOfEmps = {
+                new EmployeePayrollData(1, "Ram", 100000.0),
+                new EmployeePayrollData(2, "Sham", 150000.0),
+                new EmployeePayrollData(3, "Vyam", 20000.0)
+        };
+        EmployeePayrollService employeePayrollService =
+                new EmployeePayrollService(Arrays.asList(arrayOfEmps));
+        employeePayrollService.writeEmployeePayrollData(EmployeePayrollService.IOService.FILE_IO);
+        employeePayrollService.printData(EmployeePayrollService.IOService.FILE_IO);
+        long entries = employeePayrollService.countEntries(EmployeePayrollService.IOService.FILE_IO);
+        Assert.assertEquals(3, entries);
     }
 }

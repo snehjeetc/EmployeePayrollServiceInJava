@@ -1,5 +1,6 @@
 package com.employeepayroll;
 
+import java.time.LocalDate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -7,11 +8,17 @@ public class EmployeePayrollData {
     int id;
     String name;
     double salary;
+    LocalDate startDate;
 
     public EmployeePayrollData(int id, String name, double salary){
         this.id = id;
         this.name = name;
         this.salary = salary;
+    }
+
+    public EmployeePayrollData(int id, String name, double salary, LocalDate startDate){
+        this(id, name, salary);
+        this.startDate = startDate;
     }
 
     public static EmployeePayrollData extractEmployeePayrollObject(String line) {

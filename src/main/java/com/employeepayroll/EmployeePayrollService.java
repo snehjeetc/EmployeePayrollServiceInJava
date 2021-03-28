@@ -68,8 +68,9 @@ public class EmployeePayrollService {
         return null;
     }
 
-    public void updateEmployeeSalary(String name, double salary){
-        int result = employeePayrollDBService.updateEmployeeData(name, salary);
+    public void updateEmployeeSalary(String name, double salary, int choice){
+        int result = (choice == 1) ? employeePayrollDBService.updateEmployeeData(name, salary)
+                : employeePayrollDBService.updateEmployeeDataPreparedStatement(name, salary);
         if(result == 0) return;
         EmployeePayrollData employeePayrollData = this.getEmployeePayrollData(name);
         if(employeePayrollData != null) employeePayrollData.salary = salary;

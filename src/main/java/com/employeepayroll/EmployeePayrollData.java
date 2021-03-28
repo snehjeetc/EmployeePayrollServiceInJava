@@ -41,4 +41,14 @@ public class EmployeePayrollData {
     public String toString(){
         return "Emp id: " + this.id + ", Name: " + this.name + ", Salary: " + this.salary;
     }
+
+    @Override
+    public boolean equals(Object o){
+        if(this == o) return true;
+        if(o == null || getClass() != o.getClass()) return false;
+        EmployeePayrollData that = (EmployeePayrollData) o;
+        return this.id == that.id &&
+                Double.compare(this.salary, that.salary) == 0 &&
+                this.name.equals(that.name);
+    }
 }

@@ -1,12 +1,12 @@
 package com.employeepayroll;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
 public class EmployeePayrollService {
-
     enum IOService{ CONSOLE_IO, FILE_IO, DB_IO, REST_IO; }
     private List<EmployeePayrollData> employeePayrollList;
     private EmployeePayrollDBService employeePayrollDBService;
@@ -76,6 +76,10 @@ public class EmployeePayrollService {
         if(result == 0) return;
         EmployeePayrollData employeePayrollData = this.getEmployeePayrollDataBetweenDates(name);
         if(employeePayrollData != null) employeePayrollData.salary = salary;
+    }
+
+    public void addEmployeeToPayroll(String name, double salary, LocalDate startDate, String gender) {
+        employeePayrollList.add(employeePayrollDBService.addEmployeeToPayroll(name, salary, startDate, gender));
     }
 
     private EmployeePayrollData getEmployeePayrollDataBetweenDates(String name){

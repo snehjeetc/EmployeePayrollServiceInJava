@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -65,5 +66,13 @@ public class DBServiceTest {
         List<Double> expectedFemaleList = Arrays.asList(300000.00, 300000.00, 300000.00, 300000.00);
         Assert.assertTrue(outputMapFromDB.get("M").equals(expectedMaleList) &&
                 outputMapFromDB.get("F").equals(expectedFemaleList));
+    }
+
+    @Test
+    public void givenNewEmployee_WhenAdded_ShouldSyncWithDB(){
+        employeePayrollService.readData(DB_IO);
+        employeePayrollService.addEmployeeToPayroll("Terissa", 500000.00, LocalDate.now(), "F");
+        boolean result = employeePayrollService.checkEmployeePayrollInSyncWithDB("Terissa");
+        Assert.assertTrue(result);
     }
 }

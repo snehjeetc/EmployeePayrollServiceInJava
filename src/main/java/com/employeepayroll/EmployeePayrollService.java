@@ -72,19 +72,26 @@ public class EmployeePayrollService {
         int result = (choice == 1) ? employeePayrollDBService.updateEmployeeData(name, salary)
                 : employeePayrollDBService.updateEmployeeDataPreparedStatement(name, salary);
         if(result == 0) return;
-        EmployeePayrollData employeePayrollData = this.getEmployeePayrollData(name);
+        EmployeePayrollData employeePayrollData = this.getEmployeePayrollDataBetweenDates(name);
         if(employeePayrollData != null) employeePayrollData.salary = salary;
     }
 
-    private EmployeePayrollData getEmployeePayrollData(String name){
+    private EmployeePayrollData getEmployeePayrollDataBetweenDates(String name){
         return this.employeePayrollList.stream()
                                 .filter(employeePayrollDataItem -> employeePayrollDataItem.name.equals(name))
                                 .findFirst()
                                 .orElse(null);
     }
 
+    public List<EmployeePayrollData> getEmployeePayrollDataBetweenDates(IOService ioService, String from, String to){
+        if(ioService.equals(IOService.DB_IO)){
+            return employeePayrollDBService.getEmployeePayrollDataBetweenDates(from, to);
+        }
+        return null;
+    }
+
     public boolean checkEmployeePayrollInSyncWithDB(String name) {
         List<EmployeePayrollData> employeePayrollDataList = employeePayrollDBService.getEmployeePayrollData(name);
-        return employeePayrollDataList.get(0).equals(getEmployeePayrollData(name));
+        return employeePayrollDataList.get(0).equals(getEmployeePayrollDataBetweenDates(name));
     }
 }

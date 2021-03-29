@@ -39,4 +39,13 @@ public class DBServiceTest {
         boolean isSync = employeePayrollService.checkEmployeePayrollInSyncWithDB("Mark");
         Assert.assertTrue(isSync);
     }
+
+    @Test
+    public void givenDatesInRange_WhenRetrievedDataBetweenTwoDates_ShouldMatchEmployeeCount(){
+        String from = "2019-01-01";
+        String to = null;
+        List<EmployeePayrollData> employeePayrollDataList =
+                employeePayrollService.getEmployeePayrollDataBetweenDates(DB_IO, from, to);
+        Assert.assertEquals(2, employeePayrollDataList.size());
+    }
 }

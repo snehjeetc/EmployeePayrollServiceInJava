@@ -108,4 +108,21 @@ public class EmployeePayrollDBService {
         }
         return 0;
     }
+
+    public List<EmployeePayrollData> getEmployeePayrollDataBetweenDates(String from, String to) {
+        //if to is null, then the end date will be the present date
+        Date start = Date.valueOf(from);
+        Date end = (to == null) ? Date.valueOf(LocalDate.now()) : Date.valueOf(to);
+        try(Connection connection = this.getConnection()){
+            String sql = "SELECT * FROM employee_payroll WHERE start BETWEEN ? AND ?";
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setDate(1, start);
+            preparedStatement.setDate(2, end);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            return this.getEmployeePayrollData(resultSet);
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        return null;
+    }
 }

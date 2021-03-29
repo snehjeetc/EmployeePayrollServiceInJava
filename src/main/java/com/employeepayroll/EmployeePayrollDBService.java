@@ -125,4 +125,22 @@ public class EmployeePayrollDBService {
         }
         return null;
     }
+
+    public List<String> calculateSumAverageMinMax() {
+        List<String> outputFromDB = new ArrayList<>();
+        try(Connection connection = this.getConnection()){
+            String sql = "SELECT SUM(salary), AVG(salary), MIN(salary), MAX(salary) FROM employee_payroll";
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(sql);
+            while(resultSet.next()) {
+                outputFromDB.add(Double.toString(resultSet.getDouble("SUM(salary)")));
+                outputFromDB.add(Double.toString(resultSet.getDouble("AVG(salary)")));
+                outputFromDB.add(Double.toString(resultSet.getDouble("MIN(salary)")));
+                outputFromDB.add(Double.toString(resultSet.getDouble("MAX(salary)")));
+            }
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        return outputFromDB;
+    }
 }

@@ -94,4 +94,12 @@ public class EmployeePayrollService {
         List<EmployeePayrollData> employeePayrollDataList = employeePayrollDBService.getEmployeePayrollData(name);
         return employeePayrollDataList.get(0).equals(getEmployeePayrollDataBetweenDates(name));
     }
+
+    public List<String> calculateSumAverageMinMax(IOService ioService) {
+        if(ioService.equals(IOService.DB_IO)){
+            return employeePayrollDBService.calculateSumAverageMinMax();
+        }
+        return null;
+    }
+
 }

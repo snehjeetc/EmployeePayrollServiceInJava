@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static com.employeepayroll.EmployeePayrollService.IOService.DB_IO;
@@ -47,5 +48,12 @@ public class DBServiceTest {
         List<EmployeePayrollData> employeePayrollDataList =
                 employeePayrollService.getEmployeePayrollDataBetweenDates(DB_IO, from, to);
         Assert.assertEquals(2, employeePayrollDataList.size());
+    }
+
+    @Test
+    public void givenEmployeePayrollInDB_WhenCalculated_SUM_MIN_MAX_AVERAGE_ofSalary_ShouldGiveCorrectOutput(){
+        List<String> outputFromDB = employeePayrollService.calculateSumAverageMinMax(DB_IO);
+        List<String> expectedOutput = Arrays.asList("600000.0", "200000.0", "100000.0", "300000.0");
+        Assert.assertEquals(expectedOutput, outputFromDB);
     }
 }

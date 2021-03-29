@@ -114,7 +114,7 @@ public class EmployeePayrollDBService {
         return 0;
     }
 
-    public EmployeePayrollData addEmployeeToPayroll(String name, double salary, LocalDate startDate, String gender) {
+    public EmployeePayrollData addEmployeeToPayrollUC7(String name, double salary, LocalDate startDate, String gender) {
         int employeeId = -1;
         EmployeePayrollData employeePayrollData = null;
         String sql = String.format("INSERT INTO employee_payroll (name, gender, salary, start)VALUES " +
@@ -186,5 +186,77 @@ public class EmployeePayrollDBService {
             throwables.printStackTrace();
         }
         return outputMap;
+    }
+
+    public EmployeePayrollData addEmployeeToPayroll(String name, double salary, LocalDate startDate, String gender) {
+        int employeeId = -1;
+        Connection connection = null;
+        EmployeePayrollData employeePayrollData = null;
+        try{
+            connection =  this.getConnection();
+            connection.setAutoCommit(false);
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        try(Statement statement = connection.createStatement()){
+            String sql = String.format("INSERT INTO employee_payroll (name, gender, salary, start)VALUES " +
+                                     "('%s', '%s', %s, '%s')", name, gender, salary, Date.valueOf(startDate));
+            int rowAffected = statement.executeUpdate(sql, statement.RETURN_GENERATED_KEYS);
+            if(rowAffected == 1){
+                ResultSet resultSet = statement.getGeneratedKeys();
+                if(resultSet.next()) employeeId = resultSet.getInt(1);
+            }
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+
+        try(Statement statement = connection.createStatement()){
+            double deductions = salary * 0.2;
+            double taxablePay = salary - deductions;
+            double tax = taxablePay * 0.1;
+            double netPay = salary - tax;
+            String sql = String.format("INSERT INTO payroll_details " +
+                                     "(employee_id, basic_pay, deductions, taxable_pay, tax, net_pay) VALUES" +
+                                     "(%s, %s, %s, %s, %s, %s);",
+                                      employeeId, salary, deductions, taxablePay, tax, netPay);
+            int rowaffected = statement.executeUpdate(sql);
+            if(rowaffected == 1)
+                employeePayrollData = new EmployeePayrollData(employeeId, name, salary, startDate);
+            /*
+            if the above try catch that is if the employee_payroll table gets updated successfully
+            but there is some problem arises and the updation fails in this try block that is
+            in payroll_details, then the updation will not be in sync and hence in one table updation
+            will be visible while in other it will not (that is linkage will not happen)
+            To avoid this we have to Transaction principle
+            (to do this we do autoCommit(false) and commit() at the end of the execution if it is success.
+            */
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            connection.commit();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            return employeePayrollData;
+        }finally{
+            if(connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException throwables) {
+                    throwables.printStackTrace();
+                }
+            }
+        }
+        return employeePayrollData;
     }
 }

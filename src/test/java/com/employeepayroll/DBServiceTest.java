@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static com.employeepayroll.EmployeePayrollService.IOService.DB_IO;
 
@@ -55,5 +56,14 @@ public class DBServiceTest {
         List<String> outputFromDB = employeePayrollService.calculateSumAverageMinMax(DB_IO);
         List<String> expectedOutput = Arrays.asList("600000.0", "200000.0", "100000.0", "300000.0");
         Assert.assertEquals(expectedOutput, outputFromDB);
+    }
+
+    @Test
+    public void givenEmployeePayrollInDB_WhenCalculated_Sum_Min_Max_Average_ofSalary_GroupByGender_ShouldGiveCorrectOutput(){
+        Map<String, List<Double>> outputMapFromDB = employeePayrollService.calculateSumAverageMinMax_GroupByGender(DB_IO);
+        List<Double> expectedMaleList = Arrays.asList( 300000.00, 150000.00, 100000.00, 200000.00);
+        List<Double> expectedFemaleList = Arrays.asList(300000.00, 300000.00, 300000.00, 300000.00);
+        Assert.assertTrue(outputMapFromDB.get("M").equals(expectedMaleList) &&
+                outputMapFromDB.get("F").equals(expectedFemaleList));
     }
 }

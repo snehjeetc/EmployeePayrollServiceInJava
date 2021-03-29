@@ -2,9 +2,11 @@ package com.employeepayroll;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class EmployeePayrollService {
+
     enum IOService{ CONSOLE_IO, FILE_IO, DB_IO, REST_IO; }
     private List<EmployeePayrollData> employeePayrollList;
     private EmployeePayrollDBService employeePayrollDBService;
@@ -98,6 +100,13 @@ public class EmployeePayrollService {
     public List<String> calculateSumAverageMinMax(IOService ioService) {
         if(ioService.equals(IOService.DB_IO)){
             return employeePayrollDBService.calculateSumAverageMinMax();
+        }
+        return null;
+    }
+
+    public Map<String, List<Double>> calculateSumAverageMinMax_GroupByGender(IOService ioService) {
+        if(ioService.equals(IOService.DB_IO)){
+            return employeePayrollDBService.calculateSumAverageMinMax_GroupByGender();
         }
         return null;
     }

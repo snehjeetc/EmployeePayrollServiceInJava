@@ -3,7 +3,9 @@ package com.employeepayroll;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class EmployeePayrollDBService {
     private static String jdbcUrl = "jdbc:mysql://localhost:3306/payroll_service?useSSL=false";
@@ -33,15 +35,7 @@ public class EmployeePayrollDBService {
 
     public List<EmployeePayrollData> readData() {
         String selectQuery = "SELECT * from employee_payroll";
-        List<EmployeePayrollData> employeePayrollList = new ArrayList<>();
-        try(Connection connection = this.getConnection()){
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(selectQuery);
-            employeePayrollList = this.getEmployeePayrollData(resultSet);
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
-        }
-        return employeePayrollList;
+        return this.getEmployeePayrollDataForGivenSql(selectQuery);
     }
 
     public int updateEmployeeData(String name, double salary) {
@@ -85,6 +79,17 @@ public class EmployeePayrollDBService {
         return employeePayrollDataList;
     }
 
+    private List<EmployeePayrollData> getEmployeePayrollDataForGivenSql(String sql){
+        try(Connection connection = this.getConnection()) {
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(sql);
+            return getEmployeePayrollData(resultSet);
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        return null;
+    }
+
     public void prepareStatementForEmployeeData(){
         try{
             Connection connection = this.getConnection();
@@ -111,19 +116,16 @@ public class EmployeePayrollDBService {
 
     public List<EmployeePayrollData> getEmployeePayrollDataBetweenDates(String from, String to) {
         //if to is null, then the end date will be the present date
+
         Date start = Date.valueOf(from);
         Date end = (to == null) ? Date.valueOf(LocalDate.now()) : Date.valueOf(to);
-        try(Connection connection = this.getConnection()){
-            String sql = "SELECT * FROM employee_payroll WHERE start BETWEEN ? AND ?";
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setDate(1, start);
-            preparedStatement.setDate(2, end);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            return this.getEmployeePayrollData(resultSet);
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
-        }
-        return null;
+        String sql = String.format("SELECT * FROM employee_payroll WHERE start BETWEEN '%s' AND '%s'",
+                start, end);
+        return this.getEmployeePayrollDataForGivenSql(sql);
+
+        //The prepare statement is costly here, as we are closing the connection after
+        //executing the whole try block
+        //The best way would be to use Statement instead of preparedStatement
     }
 
     public List<String> calculateSumAverageMinMax() {
@@ -142,5 +144,28 @@ public class EmployeePayrollDBService {
             throwables.printStackTrace();
         }
         return outputFromDB;
+    }
+
+
+    public Map<String, List<Double>> calculateSumAverageMinMax_GroupByGender() {
+        Map<String, List<Double>> outputMap = new HashMap<>();
+        try(Connection connection = this.getConnection()) {
+            String sql = "SELECT gender, SUM(salary), AVG(salary), MIN(salary), MAX(salary) " +
+                    "FROM employee_payroll GROUP BY gender";
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(sql);
+            while(resultSet.next()){
+                String gender = resultSet.getString("gender");
+                List<Double> fieldList = new ArrayList<>();
+                fieldList.add(resultSet.getDouble("SUM(salary)"));
+                fieldList.add(resultSet.getDouble("AVG(salary)"));
+                fieldList.add(resultSet.getDouble("MIN(salary)"));
+                fieldList.add(resultSet.getDouble("MAX(salary)"));
+                outputMap.put(gender, fieldList);
+            }
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        return outputMap;
     }
 }

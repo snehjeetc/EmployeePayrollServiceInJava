@@ -9,7 +9,8 @@ public class ERModelExceptions extends Exception{
         CONNECTION_FAILURE ("Unable to establish connection"),
         CONNECTION_CLOSING_FAILURE ("Unable to close the connection"),
         UPDATION_FAILURE ("Unable to update"),
-        TRANSACTION_FAILURE ("Unable to perform the transaction");
+        TRANSACTION_FAILURE ("Unable to perform the transaction"),
+        REMOVAL_FAILURE("Unable to remove the employee");
 
         private String message;
 
@@ -22,7 +23,7 @@ public class ERModelExceptions extends Exception{
     List<Status> type;
 
     public ERModelExceptions(Status type){
-        super(type.toString() + type.message);
+        super(type.toString() + ": " +  type.message);
         this.type = new ArrayList<>();
         this.type.add(type);
     }

@@ -40,7 +40,7 @@ public class ERModelDBService {
                 String sql = "SELECT e.emp_id, e.name, e.start, p.basic_pay " +
                              "FROM employee e " +
                              "JOIN payroll p ON e.emp_id = p.emp_id " +
-                             "WHERE e.name = ?;";
+                             "WHERE e.name = ? AND e.isActive = true;";
             try {
                 preparedStatement = connection.prepareStatement(sql);
             } catch (SQLException e) {
@@ -77,7 +77,8 @@ public class ERModelDBService {
                              "FROM employee e JOIN payroll p ON e.emp_id = p.emp_id " +
                              "JOIN (SELECT ed.employee_id, ed.department_id, d.department_name " +
                              "FROM employee_department_table ed JOIN department d ON ed.department_id = d.department_id " +
-                             ") c ON e.emp_id = c.employee_id;";
+                             ") c ON e.emp_id = c.employee_id " +
+                             "WHERE e.isActive = true;";
                 ResultSet resultSet = statement.executeQuery(sql);
                 while(resultSet.next()){
                     int emp_id = resultSet.getInt("emp_id");
@@ -364,6 +365,74 @@ public class ERModelDBService {
                 throw new ERModelExceptions(ERModelExceptions.Status.CONNECTION_CLOSING_FAILURE);
             }
         }
+    }
+
+    public int removeEmployee(String name) throws ERModelExceptions { 
+            int rowAffected = 0;
+            int emp_id = -1;
+            Connection connection = this.getConnection();
+            try{
+                connection.setAutoCommit(false);
+            } catch (SQLException e) {
+                throw new ERModelExceptions(ERModelExceptions.Status.TRANSACTION_FAILURE);
+            }
+            try(Statement statement = connection.createStatement()){
+                String sql = String.format("UPDATE employee SET isActive = false " +
+                                           "WHERE name = '%s';", name);
+                String sql_Select = String.format("SELECT emp_id FROM employee WHERE name = '%s'", name);
+                ResultSet resultSet = statement.executeQuery(sql_Select);
+                if(resultSet.next()) emp_id = resultSet.getInt("emp_id");
+                rowAffected = statement.executeUpdate(sql);
+            } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException throwables) {
+                throw new ERModelExceptions(ERModelExceptions.Status.REMOVAL_FAILURE,
+                                            ERModelExceptions.Status.TRANSACTION_FAILURE);
+            }
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throw new ERModelExceptions(ERModelExceptions.Status.REMOVAL_FAILURE,
+                                            ERModelExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+            throw new ERModelExceptions(ERModelExceptions.Status.REMOVAL_FAILURE);
+        }
+        try {
+           this.removeFromDepartments(connection, emp_id);
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException throwables) {
+                throw new ERModelExceptions(ERModelExceptions.Status.REMOVAL_FAILURE,
+                        ERModelExceptions.Status.TRANSACTION_FAILURE);
+            }
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throw new ERModelExceptions(ERModelExceptions.Status.REMOVAL_FAILURE,
+                        ERModelExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+            throw new ERModelExceptions(ERModelExceptions.Status.REMOVAL_FAILURE);
+        }
+        try {
+            connection.commit();
+            return rowAffected;
+        } catch (SQLException e) {
+           throw new ERModelExceptions(ERModelExceptions.Status.TRANSACTION_FAILURE);
+        }
+    }
+
+    private int removeFromDepartments(Connection connection, int employee_id) throws SQLException {
+            if(employee_id == -1)
+                return 0;
+            int rowAffected = 0;
+            try(Statement statement = connection.createStatement()){
+                String sql = String.format("DELETE FROM employee_department_table " +
+                        "WHERE employee_id = %s", employee_id);
+                rowAffected = statement.executeUpdate(sql);
+            }
+            return rowAffected;
     }
 }
 

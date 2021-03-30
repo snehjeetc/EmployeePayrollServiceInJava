@@ -72,4 +72,10 @@ public class ERModelService {
                 erModelDBService.addEmployeeToPayroll(name, gender, salary, startDate, departmentMap, departmentNames);
         if(employeePayrollData != null) employeePayrollDataList.add(employeePayrollData);
     }
+
+    public void removeEmployee(String name) throws ERModelExceptions {
+        int rowAffected = erModelDBService.removeEmployee(name);
+        if(rowAffected != 0)
+            employeePayrollDataList.remove(this.getEmployeePayrollData(name));
+    }
 }

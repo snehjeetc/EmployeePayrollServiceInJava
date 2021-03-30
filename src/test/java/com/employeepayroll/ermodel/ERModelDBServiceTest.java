@@ -66,4 +66,12 @@ public class ERModelDBServiceTest {
         boolean result = erModelService.checkEmployeePayrollInSyncWithDB("Elizabeth");
         Assert.assertTrue(result);
     }
+
+    @Test
+    public void givenNewEmployee_WhenRemoved_ShouldRemoveFromSystem_ButNotFromDB() throws ERModelExceptions {
+        erModelService.readData();
+        erModelService.removeEmployee("Elizabeth");
+        boolean result = erModelService.checkEmployeePayrollInSyncWithDB("Elizabeth");
+        Assert.assertTrue(result);
+    }
 }

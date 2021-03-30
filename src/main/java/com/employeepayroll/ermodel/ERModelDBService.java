@@ -22,35 +22,36 @@ public class ERModelDBService {
             return erModelDBService;
         }
 
-        private Connection getConnection() throws SQLException {
-            Connection connection;
-            System.out.println("Connecting to database: " + jdbcUrl);
-            connection = DriverManager.getConnection(jdbcUrl, userName, passWord);
-            System.out.println("connection is successful!!!!" + connection);
-            return connection;
+        private Connection getConnection() throws ERModelExceptions {
+            Connection connection = null;
+            try {
+                System.out.println("Connecting to database: " + jdbcUrl);
+                connection = DriverManager.getConnection(jdbcUrl, userName, passWord);
+                System.out.println("connection is successful!!!!" + connection);
+                return connection;
+            } catch (SQLException e) {
+                throw new ERModelExceptions(ERModelExceptions.Status.CONNECTION_FAILURE);
+            }
         }
 
         private void prepareStatement() throws ERModelExceptions {
-            try{
                 Connection connection = this.getConnection();
                 String sql = "SELECT e.emp_id, e.name, e.start, p.basic_pay " +
                              "FROM employee e " +
                              "JOIN payroll p ON e.emp_id = p.emp_id " +
                              "WHERE e.name = ?;";
+            try {
                 preparedStatement = connection.prepareStatement(sql);
             } catch (SQLException e) {
-               throw new ERModelExceptions(ERModelExceptions.Status.CONNECTION_FAILURE);
+               throw new ERModelExceptions(ERModelExceptions.Status.READ_FAILURE);
             }
         }
 
         public List<EmployeePayrollData> readData(Map<Integer, Department> departmentMap) throws ERModelExceptions {
             List<EmployeePayrollData> employeePayrollDataList = new ArrayList<>();
             Connection connection = null;
-            try{
-                connection = getConnection();
-            } catch (SQLException e) {
-                throw new ERModelExceptions(ERModelExceptions.Status.CONNECTION_FAILURE);
-            }
+            connection = getConnection();
+
             try(Statement statement = connection.createStatement()) {
                 String sql = "SELECT * FROM department";
                 ResultSet resultSet = statement.executeQuery(sql);
@@ -65,7 +66,8 @@ public class ERModelDBService {
                 try {
                     connection.close();
                 } catch (SQLException e) {
-                    throw new ERModelExceptions(ERModelExceptions.Status.READ_FAILURE,ERModelExceptions.Status.CONNECTION_CLOSING_FAILURE);
+                    throw new ERModelExceptions(ERModelExceptions.Status.READ_FAILURE,
+                            ERModelExceptions.Status.CONNECTION_CLOSING_FAILURE);
                 }
                 throw new ERModelExceptions(ERModelExceptions.Status.READ_FAILURE);
             }
@@ -98,7 +100,8 @@ public class ERModelDBService {
                 try {
                     connection.close();
                 } catch (SQLException throwables) {
-                    throw new ERModelExceptions(ERModelExceptions.Status.READ_FAILURE, ERModelExceptions.Status.CONNECTION_CLOSING_FAILURE);
+                    throw new ERModelExceptions(ERModelExceptions.Status.READ_FAILURE,
+                            ERModelExceptions.Status.CONNECTION_CLOSING_FAILURE);
                 }
                 throw new ERModelExceptions(ERModelExceptions.Status.READ_FAILURE);
             }
@@ -107,11 +110,7 @@ public class ERModelDBService {
 
     public int updateEmployeeData(String name, double salary) throws ERModelExceptions {
             Connection connection = null;
-            try{
-                connection = this.getConnection();
-            } catch (SQLException e) {
-                throw new ERModelExceptions(ERModelExceptions.Status.CONNECTION_FAILURE);
-            }
+            connection = this.getConnection();
             try(Statement statement = connection.createStatement()){
                 double deductions = salary * 0.2;
                 double tax = (salary - deductions) * 0.1;
@@ -165,17 +164,36 @@ public class ERModelDBService {
     public List<EmployeePayrollData> getEmployeePayrollDataBetweenDates(String from, String to) throws ERModelExceptions {
             LocalDate fromDate = LocalDate.parse(from);
             LocalDate toDate = (to == null) ? LocalDate.now() : LocalDate.parse(to);
-            try(Connection connection = this.getConnection()){
+            Connection connection = this.getConnection();
+            try( Statement statement = connection.createStatement()){
                 String sql = String.format("SELECT e.emp_id, e.name, e.start, p.basic_pay " +
                         "FROM employee e " +
                         "JOIN payroll p ON e.emp_id = p.emp_id " +
                         "WHERE e.start BETWEEN '%s' AND '%s';", fromDate, toDate);
-                Statement statement = connection.createStatement();
                 ResultSet resultSet = statement.executeQuery(sql);
                 return this.executeSelectQuery(resultSet);
             } catch (SQLException e) {
                 throw new ERModelExceptions(ERModelExceptions.Status.READ_FAILURE);
             }
+    }
+
+    public List<Double> calculateSumAverageMinMax() throws ERModelExceptions {
+            String sql = "SELECT SUM(basic_pay), AVG(basic_pay), MIN(basic_pay), MAX(basic_pay) " +
+                         "FROM payroll;";
+           Connection connection = this.getConnection();
+           List<Double> output = new ArrayList<>();
+           try(Statement statement = connection.createStatement()){
+               ResultSet resultSet = statement.executeQuery(sql);
+               while(resultSet.next()){
+                   output.add(resultSet.getDouble("SUM(basic_pay)"));
+                   output.add(resultSet.getDouble("AVG(basic_pay)"));
+                   output.add(resultSet.getDouble("MIN(basic_pay)"));
+                   output.add(resultSet.getDouble("MAX(basic_pay)"));
+               }
+               return output;
+           } catch (SQLException e) {
+               throw new ERModelExceptions(ERModelExceptions.Status.READ_FAILURE);
+           }
     }
 }
 

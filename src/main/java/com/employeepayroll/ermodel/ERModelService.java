@@ -55,4 +55,8 @@ public class ERModelService {
     public List<EmployeePayrollData> getEmployeePayrollDataBetweenDates(String from, String to) throws ERModelExceptions {
         return erModelDBService.getEmployeePayrollDataBetweenDates(from, to);
     }
+
+    public List<Double> calculateSumAverageMinMax() throws ERModelExceptions {
+        return erModelDBService.calculateSumAverageMinMax();
+    }
 }

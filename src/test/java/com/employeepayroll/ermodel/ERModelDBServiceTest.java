@@ -6,6 +6,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class ERModelDBServiceTest {
@@ -40,5 +41,10 @@ public class ERModelDBServiceTest {
         Assert.assertEquals(2, employeePayrollDataList.size());
     }
 
-
+    @Test
+    public void givenEmployeePayrollInDB_WhenCalculated_SUM_MIN_MAX_AVERAGE_ofSalary_ShouldGiveCorrectOutput() throws ERModelExceptions {
+        List<Double> outputFromDB = erModelService.calculateSumAverageMinMax();
+        List<Double> expectedOutput = Arrays.asList(410000.0, 102500.0, 30000.0, 300000.0);
+        Assert.assertEquals(expectedOutput, outputFromDB);
+    }
 }

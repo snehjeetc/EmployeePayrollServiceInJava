@@ -51,4 +51,8 @@ public class ERModelService {
                                            .findFirst()
                                            .orElse(null);
     }
+
+    public List<EmployeePayrollData> getEmployeePayrollDataBetweenDates(String from, String to) throws ERModelExceptions {
+        return erModelDBService.getEmployeePayrollDataBetweenDates(from, to);
+    }
 }

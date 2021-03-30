@@ -4,10 +4,7 @@ import com.employeepayroll.EmployeePayrollData;
 
 import java.sql.*;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ERModelDBService {
         private static String jdbcUrl = "jdbc:mysql://localhost:3306/employeePayrollDB?useSSL=false";
@@ -138,27 +135,48 @@ public class ERModelDBService {
     }
 
     public List<EmployeePayrollData> getEmployeePayrollData(String name) throws ERModelExceptions {
-            List<EmployeePayrollData> employeePayrollDataList = new ArrayList<>();
+            List<EmployeePayrollData> employeePayrollDataList = null;
             if(preparedStatement == null)
                 this.prepareStatement();
             try{
                 preparedStatement.setString(1, name);
                 ResultSet resultSet = preparedStatement.executeQuery();
-                while(resultSet.next()){
-                    int emp_id = resultSet.getInt("emp_id");
-                    String emp_name = resultSet.getString("name");
-                    LocalDate startDate = resultSet.getDate("start").toLocalDate();
-                    double salary = resultSet.getDouble("basic_pay");
-                    EmployeePayrollData empData = new EmployeePayrollData(emp_id, emp_name, salary, startDate);
-                    employeePayrollDataList.add(empData);
-                }
+                employeePayrollDataList = this.executeSelectQuery(resultSet);
             } catch (SQLException e) {
                 throw new ERModelExceptions(ERModelExceptions.Status.READ_FAILURE);
             }
             return employeePayrollDataList;
     }
 
+    private List<EmployeePayrollData> executeSelectQuery(ResultSet resultSet) throws SQLException {
+        List<EmployeePayrollData> employeePayrollDataList = new ArrayList<>();
+        while(resultSet.next()){
+            int emp_id = resultSet.getInt("emp_id");
+            String emp_name = resultSet.getString("name");
+            LocalDate startDate = resultSet.getDate("start").toLocalDate();
+            double salary = resultSet.getDouble("basic_pay");
+            EmployeePayrollData empData = new EmployeePayrollData(emp_id, emp_name, salary, startDate);
+            employeePayrollDataList.add(empData);
+        }
+        return employeePayrollDataList;
+    }
 
+
+    public List<EmployeePayrollData> getEmployeePayrollDataBetweenDates(String from, String to) throws ERModelExceptions {
+            LocalDate fromDate = LocalDate.parse(from);
+            LocalDate toDate = (to == null) ? LocalDate.now() : LocalDate.parse(to);
+            try(Connection connection = this.getConnection()){
+                String sql = String.format("SELECT e.emp_id, e.name, e.start, p.basic_pay " +
+                        "FROM employee e " +
+                        "JOIN payroll p ON e.emp_id = p.emp_id " +
+                        "WHERE e.start BETWEEN '%s' AND '%s';", fromDate, toDate);
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(sql);
+                return this.executeSelectQuery(resultSet);
+            } catch (SQLException e) {
+                throw new ERModelExceptions(ERModelExceptions.Status.READ_FAILURE);
+            }
+    }
 }
 
 

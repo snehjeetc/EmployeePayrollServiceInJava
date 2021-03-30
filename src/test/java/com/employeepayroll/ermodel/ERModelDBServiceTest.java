@@ -30,4 +30,15 @@ public class ERModelDBServiceTest {
         boolean isSync = erModelService.checkEmployeePayrollInSyncWithDB("Bill");
         Assert.assertTrue(isSync);
     }
+
+    @Test
+    public void givenDatesInRange_WhenRetrievedDataBetweenTwoDates_ShouldMatchEmployeeCount() throws ERModelExceptions {
+        String from = "2019-01-01";
+        String to = null;
+        List<EmployeePayrollData> employeePayrollDataList =
+               erModelService.getEmployeePayrollDataBetweenDates(from, to);
+        Assert.assertEquals(2, employeePayrollDataList.size());
+    }
+
+
 }

@@ -18,8 +18,37 @@ public class ERModelService {
         departmentMap = new HashMap<>();
     }
 
+    public boolean checkEmployeePayrollInSyncWithDB(String name) throws ERModelExceptions {
+        List<EmployeePayrollData> employeePayrollDataList =
+                erModelDBService.getEmployeePayrollData(name);
+        EmployeePayrollData employeePayrollData = this.getEmployeePayrollData(name);
+        if(employeePayrollDataList.size() == 0 && employeePayrollData == null)
+            return true;
+        else if(employeePayrollData == null)
+            return false;
+        else if(employeePayrollDataList.size() == 0)
+            return false;
+        else
+            return employeePayrollDataList.get(0).equals(getEmployeePayrollData(name));
+    }
+
+
     public List<EmployeePayrollData> readData() throws ERModelExceptions {
         employeePayrollDataList = erModelDBService.readData(departmentMap);
         return employeePayrollDataList;
+    }
+
+    public void updateEmployeeSalary(String name, double salary) throws ERModelExceptions {
+        int res = erModelDBService.updateEmployeeData(name, salary);
+        if(res == 0) return;
+        EmployeePayrollData employeePayrollData = this.getEmployeePayrollData(name);
+        if(employeePayrollData != null) employeePayrollData.setSalary(salary);
+    }
+
+    private EmployeePayrollData getEmployeePayrollData(String name) {
+        return this.employeePayrollDataList.stream()
+                                           .filter(employeePayrollData -> employeePayrollData.getName().equals(name))
+                                           .findFirst()
+                                           .orElse(null);
     }
 }

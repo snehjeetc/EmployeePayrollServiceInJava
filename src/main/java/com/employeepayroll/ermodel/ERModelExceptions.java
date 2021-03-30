@@ -8,7 +8,8 @@ public class ERModelExceptions extends Exception{
         READ_FAILURE ("Unable to read data from data base"),
         ROLLBACK_FAILURE ("Unable to reset after failure"),
         CONNECTION_FAILURE ("Unable to establish connection"),
-        CONNECTION_CLOSING_FAILURE ("Unable to close the connection");
+        CONNECTION_CLOSING_FAILURE ("Unable to close the connection"),
+        UPDATION_FAILURE ("Unable to update");
 
         private String message;
 

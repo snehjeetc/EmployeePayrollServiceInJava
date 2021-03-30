@@ -48,6 +48,8 @@ public class EmployeePayrollData {
     }
 
     public int getId() { return this.id; }
+    public String getName() { return this.name; }
+    public void setSalary(double salary) { this.salary = salary; }
 
     @Override
     public String toString(){

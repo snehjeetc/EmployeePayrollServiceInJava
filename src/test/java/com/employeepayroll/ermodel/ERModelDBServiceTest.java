@@ -21,4 +21,13 @@ public class ERModelDBServiceTest {
         List<EmployeePayrollData> employeePayrollDataList = erModelService.readData();
         Assert.assertEquals(4, employeePayrollDataList.size());
     }
+
+    @Test
+    public void givenNewSalaryForEmployee_WhenUpdated_UsingStatement_ShouldSyncWithDatabase() throws ERModelExceptions {
+        List<EmployeePayrollData> employeePayrollDataList =
+                erModelService.readData();
+        erModelService.updateEmployeeSalary("Bill", 300000);
+        boolean isSync = erModelService.checkEmployeePayrollInSyncWithDB("Bill");
+        Assert.assertTrue(isSync);
+    }
 }

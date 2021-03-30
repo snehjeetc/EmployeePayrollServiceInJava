@@ -9,9 +9,9 @@ import java.util.Scanner;
 public class EmployeePayrollService {
 
 
-    enum IOService{ CONSOLE_IO, FILE_IO, DB_IO, REST_IO; }
+    enum IOService{ CONSOLE_IO, FILE_IO, DB_IO, REST_IO }
     private List<EmployeePayrollData> employeePayrollList;
-    private EmployeePayrollDBService employeePayrollDBService;
+    private final EmployeePayrollDBService employeePayrollDBService;
 
     public EmployeePayrollService() {
         employeePayrollDBService = EmployeePayrollDBService.getInstance();
@@ -76,7 +76,7 @@ public class EmployeePayrollService {
         int result = (choice == 1) ? employeePayrollDBService.updateEmployeeData(name, salary)
                 : employeePayrollDBService.updateEmployeeDataPreparedStatement(name, salary);
         if(result == 0) return;
-        EmployeePayrollData employeePayrollData = this.getEmployeePayrollDataBetweenDates(name);
+        EmployeePayrollData employeePayrollData = this.getEmployeePayrollData(name);
         if(employeePayrollData != null) employeePayrollData.salary = salary;
     }
 
@@ -84,7 +84,7 @@ public class EmployeePayrollService {
         employeePayrollList.add(employeePayrollDBService.addEmployeeToPayroll(name, salary, startDate, gender));
     }
 
-    private EmployeePayrollData getEmployeePayrollDataBetweenDates(String name){
+    private EmployeePayrollData getEmployeePayrollData(String name){
         return this.employeePayrollList.stream()
                                 .filter(employeePayrollDataItem -> employeePayrollDataItem.name.equals(name))
                                 .findFirst()
@@ -100,7 +100,7 @@ public class EmployeePayrollService {
 
     public boolean checkEmployeePayrollInSyncWithDB(String name) {
         List<EmployeePayrollData> employeePayrollDataList = employeePayrollDBService.getEmployeePayrollData(name);
-        return employeePayrollDataList.get(0).equals(getEmployeePayrollDataBetweenDates(name));
+        return employeePayrollDataList.get(0).equals(getEmployeePayrollData(name));
     }
 
     public List<String> calculateSumAverageMinMax(IOService ioService) {

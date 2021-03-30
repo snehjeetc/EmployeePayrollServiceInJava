@@ -59,4 +59,8 @@ public class ERModelService {
     public List<Double> calculateSumAverageMinMax() throws ERModelExceptions {
         return erModelDBService.calculateSumAverageMinMax();
     }
+
+    public Map<String, List<Double>> calculateSumAverageMinMax_GroupByGender() throws ERModelExceptions {
+        return erModelDBService.calculateSumAverageMinMax_GroupByGender();
+    }
 }

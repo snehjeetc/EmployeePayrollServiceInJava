@@ -2,6 +2,7 @@ package com.employeepayroll.ermodel;
 
 import com.employeepayroll.EmployeePayrollData;
 
+import javax.swing.plaf.nimbus.State;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.*;
@@ -194,6 +195,29 @@ public class ERModelDBService {
            } catch (SQLException e) {
                throw new ERModelExceptions(ERModelExceptions.Status.READ_FAILURE);
            }
+    }
+
+    public Map<String, List<Double>> calculateSumAverageMinMax_GroupByGender() throws ERModelExceptions {
+        Map<String, List<Double>> outputMap = new HashMap<>();
+        Connection connection = this.getConnection();
+        try(Statement statement = connection.createStatement()){
+            String sql = "SELECT e.gender, SUM(p.basic_pay), AVG(p.basic_pay), MIN(p.basic_pay), MAX(p.basic_pay) " +
+                         "FROM employee e JOIN payroll p USING (emp_id) " +
+                         "GROUP BY e.gender;";
+            ResultSet resultSet = statement.executeQuery(sql);
+            while(resultSet.next()){
+                String gender = resultSet.getString("gender");
+                List<Double> output = new ArrayList<>();
+                output.add(resultSet.getDouble("SUM(p.basic_pay)"));
+                output.add(resultSet.getDouble("AVG(p.basic_pay)"));
+                output.add(resultSet.getDouble("MIN(p.basic_pay)"));
+                output.add(resultSet.getDouble("MAX(p.basic_pay)"));
+                outputMap.put(gender, output);
+            }
+            return outputMap;
+        } catch (SQLException e) {
+            throw new ERModelExceptions(ERModelExceptions.Status.READ_FAILURE);
+        }
     }
 }
 

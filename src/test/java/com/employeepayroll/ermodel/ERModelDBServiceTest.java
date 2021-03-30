@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class ERModelDBServiceTest {
     private ERModelService erModelService;
@@ -46,5 +47,14 @@ public class ERModelDBServiceTest {
         List<Double> outputFromDB = erModelService.calculateSumAverageMinMax();
         List<Double> expectedOutput = Arrays.asList(410000.0, 102500.0, 30000.0, 300000.0);
         Assert.assertEquals(expectedOutput, outputFromDB);
+    }
+
+    @Test
+    public void givenEmployeePayrollInDB_WhenCalculated_Sum_Min_Max_Average_ofSalary_GroupByGender_ShouldGiveCorrectOutput() throws ERModelExceptions {
+        Map<String, List<Double>> outputMapFromDB = erModelService.calculateSumAverageMinMax_GroupByGender();
+        List<Double> expectedMaleList = Arrays.asList( 340000.00, 170000.00, 40000.00, 300000.00);
+        List<Double> expectedFemaleList = Arrays.asList(70000.00, 35000.00, 30000.00, 40000.00);
+        Assert.assertTrue(outputMapFromDB.get("M").equals(expectedMaleList) &&
+                outputMapFromDB.get("F").equals(expectedFemaleList));
     }
 }

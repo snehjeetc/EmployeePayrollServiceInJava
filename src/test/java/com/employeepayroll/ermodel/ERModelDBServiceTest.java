@@ -6,6 +6,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -56,5 +57,13 @@ public class ERModelDBServiceTest {
         List<Double> expectedFemaleList = Arrays.asList(70000.00, 35000.00, 30000.00, 40000.00);
         Assert.assertTrue(outputMapFromDB.get("M").equals(expectedMaleList) &&
                 outputMapFromDB.get("F").equals(expectedFemaleList));
+    }
+
+    @Test
+    public void givenNewEmployee_WhenAdded_ShouldSyncWithDB() throws ERModelExceptions {
+        erModelService.readData();
+        erModelService.addEmployeeToPayroll("Elizabeth","F", 500000.00, LocalDate.now(),  "R&D", "HR");
+        boolean result = erModelService.checkEmployeePayrollInSyncWithDB("Elizabeth");
+        Assert.assertTrue(result);
     }
 }

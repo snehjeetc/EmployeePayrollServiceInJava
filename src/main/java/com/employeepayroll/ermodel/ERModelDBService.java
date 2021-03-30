@@ -2,10 +2,10 @@ package com.employeepayroll.ermodel;
 
 import com.employeepayroll.EmployeePayrollData;
 
-import javax.swing.plaf.nimbus.State;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ERModelDBService {
         private static String jdbcUrl = "jdbc:mysql://localhost:3306/employeePayrollDB?useSSL=false";
@@ -161,6 +161,134 @@ public class ERModelDBService {
         return employeePayrollDataList;
     }
 
+    public EmployeePayrollData addEmployeeToPayroll(String name, String gender, double salary, LocalDate startDate,
+                                    Map<Integer, Department> departmentMap, String[] departmentNames) throws ERModelExceptions {
+        int emp_id = -1;
+        Connection connection = this.getConnection();
+        try{
+            connection.setAutoCommit(false);
+        } catch (SQLException e) {
+            throw new ERModelExceptions(ERModelExceptions.Status.TRANSACTION_FAILURE);
+        }
+        try(Statement statement = connection.createStatement()){
+            String sql = String.format("INSERT INTO employee " +
+                         "(name, gender, start) VALUES " +
+                         "('%s', '%s', '%s');", name, gender, startDate);
+            int rowAffected = statement.executeUpdate(sql, statement.RETURN_GENERATED_KEYS);
+            if(rowAffected == 1){
+                ResultSet resultSet = statement.getGeneratedKeys();
+                if(resultSet.next()) emp_id = resultSet.getInt(1);
+            }
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException throwables) {
+                throw new ERModelExceptions(ERModelExceptions.Status.UPDATION_FAILURE,
+                                            ERModelExceptions.Status.TRANSACTION_FAILURE);
+            }
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throw new ERModelExceptions(ERModelExceptions.Status.UPDATION_FAILURE,
+                                            ERModelExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+            throw new ERModelExceptions(ERModelExceptions.Status.UPDATION_FAILURE);
+        }
+        try(Statement statement = connection.createStatement()){
+            double deductions = salary * 0.2;
+            double tax = (salary - deductions) * 0.1;
+            String sql = String.format("INSERT INTO payroll " +
+                         "(emp_id, basic_pay, deductions, tax) VALUES " +
+                         "(%s, %s, %s, %s);", emp_id, salary, deductions, tax);
+            int rowAffected = statement.executeUpdate(sql);
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException throwables) {
+                throw new ERModelExceptions(ERModelExceptions.Status.UPDATION_FAILURE,
+                        ERModelExceptions.Status.TRANSACTION_FAILURE);
+            }
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throw new ERModelExceptions(ERModelExceptions.Status.UPDATION_FAILURE,
+                        ERModelExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+            throw new ERModelExceptions(ERModelExceptions.Status.UPDATION_FAILURE);
+        }
+        EmployeePayrollData employeePayrollData =
+                new EmployeePayrollData(emp_id, name, salary, startDate);
+        try {
+            boolean isSuccess = this.updateDepartments(connection, employeePayrollData, departmentMap, departmentNames);
+            if(!isSuccess)
+                throw new SQLException();
+        } catch (SQLException e) {
+            try {
+                connection.rollback();
+            } catch (SQLException throwables) {
+                throw new ERModelExceptions(ERModelExceptions.Status.UPDATION_FAILURE,
+                                            ERModelExceptions.Status.TRANSACTION_FAILURE);
+            }
+            try {
+                connection.close();
+            } catch (SQLException throwables) {
+                throw new ERModelExceptions(ERModelExceptions.Status.UPDATION_FAILURE,
+                                            ERModelExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+            throw new ERModelExceptions(ERModelExceptions.Status.UPDATION_FAILURE);
+        }
+        try {
+            connection.commit();
+            return employeePayrollData;
+        } catch (SQLException e) {
+            throw new ERModelExceptions(ERModelExceptions.Status.TRANSACTION_FAILURE);
+        }finally{
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                throw new ERModelExceptions(ERModelExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
+        }
+    }
+
+    private boolean updateDepartments(Connection connection, EmployeePayrollData employeePayrollData,
+                                      Map<Integer, Department> departmentMap, String[] departmentNames) throws SQLException {
+            if(departmentNames.length == 0)
+                return true;
+            List<Department> departmentList = new ArrayList<>();
+            String select_query = "SELECT * FROM department WHERE department_name = ?";
+            String update_query = "INSERT INTO department (department_name) VALUES (?)";
+            PreparedStatement searchStatement = connection.prepareStatement(select_query);
+            PreparedStatement updateStatement = connection.prepareStatement(update_query, Statement.RETURN_GENERATED_KEYS);
+            int index = 0;
+            while(index < departmentNames.length){
+                searchStatement.setString(1, departmentNames[index]);
+                ResultSet searchResultSet = searchStatement.executeQuery();
+                int department_id = -1;
+                if(searchResultSet.next()) department_id = searchResultSet.getInt("department_id");
+                if(department_id == -1){
+                    updateStatement.setString(1, departmentNames[index]);
+                    int rowAffected = updateStatement.executeUpdate();
+                    ResultSet updateResult = updateStatement.getGeneratedKeys();
+                    if(updateResult.next()) department_id = updateResult.getInt(1);
+                }
+                Department department = new Department(department_id, departmentNames[index]);
+                if(!departmentMap.containsKey(department_id))
+                    departmentMap.put(department_id, department);
+                departmentList.add(department);
+                index++;
+            }
+            try(Statement statement = connection.createStatement()) {
+                for (Department department : departmentList) {
+                    String sql = String.format("INSERT INTO employee_department_table " +
+                            "(employee_id, department_id) VALUES " +
+                            "(%s, %s);", employeePayrollData.getId(), department.department_id);
+                    statement.executeUpdate(sql);
+                    employeePayrollData.addDepartment(department);
+                }
+            }
+            return true;
+    }
 
     public List<EmployeePayrollData> getEmployeePayrollDataBetweenDates(String from, String to) throws ERModelExceptions {
             LocalDate fromDate = LocalDate.parse(from);
@@ -175,6 +303,12 @@ public class ERModelDBService {
                 return this.executeSelectQuery(resultSet);
             } catch (SQLException e) {
                 throw new ERModelExceptions(ERModelExceptions.Status.READ_FAILURE);
+            }finally {
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    throw new ERModelExceptions(ERModelExceptions.Status.CONNECTION_CLOSING_FAILURE);
+                }
             }
     }
 
@@ -194,6 +328,12 @@ public class ERModelDBService {
                return output;
            } catch (SQLException e) {
                throw new ERModelExceptions(ERModelExceptions.Status.READ_FAILURE);
+           }finally {
+               try {
+                   connection.close();
+               } catch (SQLException e) {
+                   throw new ERModelExceptions(ERModelExceptions.Status.CONNECTION_CLOSING_FAILURE);
+               }
            }
     }
 
@@ -217,6 +357,12 @@ public class ERModelDBService {
             return outputMap;
         } catch (SQLException e) {
             throw new ERModelExceptions(ERModelExceptions.Status.READ_FAILURE);
+        }finally {
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                throw new ERModelExceptions(ERModelExceptions.Status.CONNECTION_CLOSING_FAILURE);
+            }
         }
     }
 }

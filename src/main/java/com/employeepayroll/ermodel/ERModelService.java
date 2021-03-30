@@ -2,6 +2,7 @@ package com.employeepayroll.ermodel;
 
 import com.employeepayroll.EmployeePayrollData;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -60,7 +61,15 @@ public class ERModelService {
         return erModelDBService.calculateSumAverageMinMax();
     }
 
-    public Map<String, List<Double>> calculateSumAverageMinMax_GroupByGender() throws ERModelExceptions {
+    public Map<String, List<Double>> calculateSumAverageMinMax_GroupByGender()
+            throws ERModelExceptions {
         return erModelDBService.calculateSumAverageMinMax_GroupByGender();
+    }
+
+    public void addEmployeeToPayroll(String name, String gender, double salary, LocalDate startDate,
+                                     String ...departmentNames) throws ERModelExceptions {
+        EmployeePayrollData employeePayrollData =
+                erModelDBService.addEmployeeToPayroll(name, gender, salary, startDate, departmentMap, departmentNames);
+        if(employeePayrollData != null) employeePayrollDataList.add(employeePayrollData);
     }
 }

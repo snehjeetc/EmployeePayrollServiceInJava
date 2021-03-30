@@ -6,10 +6,10 @@ import java.util.List;
 public class ERModelExceptions extends Exception{
     enum Status{
         READ_FAILURE ("Unable to read data from data base"),
-        ROLLBACK_FAILURE ("Unable to reset after failure"),
         CONNECTION_FAILURE ("Unable to establish connection"),
         CONNECTION_CLOSING_FAILURE ("Unable to close the connection"),
-        UPDATION_FAILURE ("Unable to update");
+        UPDATION_FAILURE ("Unable to update"),
+        TRANSACTION_FAILURE ("Unable to perform the transaction");
 
         private String message;
 

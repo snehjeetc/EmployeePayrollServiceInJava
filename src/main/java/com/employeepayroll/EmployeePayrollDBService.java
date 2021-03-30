@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 public class EmployeePayrollDBService {
-    private static String jdbcUrl = "jdbc:mysql://localhost:3306/payroll_service?useSSL=false";
+    private static String jdbcUrl = "jdbc:mysql://localhost:3306/employeePayrollDB?useSSL=false";
     private static String userName = "root";
     private static String passWord = "Rooting@1";
 

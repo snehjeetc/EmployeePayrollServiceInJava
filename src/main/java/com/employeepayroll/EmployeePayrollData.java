@@ -1,6 +1,10 @@
 package com.employeepayroll;
 
+import com.employeepayroll.ermodel.Department;
+
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -9,6 +13,7 @@ public class EmployeePayrollData {
     String name;
     double salary;
     LocalDate startDate;
+    List<Department> departments;
 
     public EmployeePayrollData(int id, String name, double salary){
         this.id = id;
@@ -19,6 +24,7 @@ public class EmployeePayrollData {
     public EmployeePayrollData(int id, String name, double salary, LocalDate startDate){
         this(id, name, salary);
         this.startDate = startDate;
+        departments = new ArrayList<>();
     }
 
     public static EmployeePayrollData extractEmployeePayrollObject(String line) {
@@ -36,6 +42,12 @@ public class EmployeePayrollData {
         double salary = Double.parseDouble(storageFields[2]);
         return new EmployeePayrollData(id, name, salary);
     }
+
+    public void addDepartment(Department department){
+        departments.add(department);
+    }
+
+    public int getId() { return this.id; }
 
     @Override
     public String toString(){

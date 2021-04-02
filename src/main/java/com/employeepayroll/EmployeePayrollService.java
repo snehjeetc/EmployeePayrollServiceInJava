@@ -8,7 +8,6 @@ import java.util.Scanner;
 
 public class EmployeePayrollService {
 
-
     enum IOService{ CONSOLE_IO, FILE_IO, DB_IO, REST_IO }
     private List<EmployeePayrollData> employeePayrollList;
     private final EmployeePayrollDBService employeePayrollDBService;
@@ -57,7 +56,7 @@ public class EmployeePayrollService {
     public long countEntries(IOService ioService) {
         if(ioService.equals(IOService.FILE_IO))
             return new EmployeePayrollFileIOService().countEntries();
-        return 0;
+        return employeePayrollList.size();
     }
 
     public ArrayList<EmployeePayrollData> readData(IOService ioService) {
@@ -82,6 +81,14 @@ public class EmployeePayrollService {
 
     public void addEmployeeToPayroll(String name, double salary, LocalDate startDate, String gender) {
         employeePayrollList.add(employeePayrollDBService.addEmployeeToPayroll(name, salary, startDate, gender));
+    }
+
+
+    public void addEmployeesToPayroll(List<EmployeePayrollData> employeePayrollDataList) {
+        employeePayrollDataList.forEach(employeePayrollData -> {
+            this.addEmployeeToPayroll(employeePayrollData.name, employeePayrollData.salary,
+                    employeePayrollData.startDate, employeePayrollData.gender);
+        });
     }
 
     private EmployeePayrollData getEmployeePayrollData(String name){

@@ -12,7 +12,9 @@ public class EmployeePayrollData {
     int id;
     String name;
     double salary;
+    String gender;
     LocalDate startDate;
+
     List<Department> departments;
 
     public EmployeePayrollData(int id, String name, double salary){
@@ -25,6 +27,11 @@ public class EmployeePayrollData {
         this(id, name, salary);
         this.startDate = startDate;
         departments = new ArrayList<>();
+    }
+
+    public EmployeePayrollData(int id, String name, String gender, double salary, LocalDate startDate){
+        this(id, name, salary, startDate);
+        this.gender = gender;
     }
 
     public static EmployeePayrollData extractEmployeePayrollObject(String line) {

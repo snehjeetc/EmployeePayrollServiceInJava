@@ -5,6 +5,7 @@ import com.employeepayroll.ermodel.Department;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -71,5 +72,10 @@ public class EmployeePayrollData {
         return this.id == that.id &&
                 Double.compare(this.salary, that.salary) == 0 &&
                 this.name.equals(that.name);
+    }
+
+    @Override
+    public int hashCode(){
+        return Objects.hash(name, gender, salary, startDate);
     }
 }

@@ -1,10 +1,7 @@
 package com.employeepayroll;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
 public class EmployeePayrollService {
 
@@ -51,6 +48,8 @@ public class EmployeePayrollService {
     public void printData(IOService ioService) {
         if(ioService.equals(IOService.FILE_IO))
             new EmployeePayrollFileIOService().printData();
+        else
+            System.out.println(employeePayrollList);
     }
 
     public long countEntries(IOService ioService) {
@@ -89,6 +88,28 @@ public class EmployeePayrollService {
             this.addEmployeeToPayroll(employeePayrollData.name, employeePayrollData.salary,
                     employeePayrollData.startDate, employeePayrollData.gender);
         });
+    }
+
+    public void addEmployeesToPayrollWithThreads(List<EmployeePayrollData> employeePayrollList){
+        Map<Integer, Boolean> employeeAdditionStatus = new HashMap<>();
+        employeePayrollList.forEach(employeePayrollData ->  {
+            Runnable task = () -> {
+                employeeAdditionStatus.put(employeePayrollData.hashCode(), false);
+                System.out.println("Employee Being added: "+Thread.currentThread().getName());
+                this.addEmployeeToPayroll(employeePayrollData.name, employeePayrollData.salary,
+                        employeePayrollData.startDate, employeePayrollData.gender);
+                employeeAdditionStatus.put(employeePayrollData.hashCode(), true);
+                System.out.println("Employee added: "+ Thread.currentThread().getName());
+            };
+            Thread thread = new Thread(task, employeePayrollData.name);
+            thread.start();
+        });
+        while(employeeAdditionStatus.containsValue(false)){
+            try{Thread.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private EmployeePayrollData getEmployeePayrollData(String name){

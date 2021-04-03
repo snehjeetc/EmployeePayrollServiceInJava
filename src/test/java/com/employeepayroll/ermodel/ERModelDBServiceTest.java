@@ -59,6 +59,7 @@ public class ERModelDBServiceTest {
                 outputMapFromDB.get("F").equals(expectedFemaleList));
     }
 
+
     @Test
     public void givenNewEmployee_WhenAdded_ShouldSyncWithDB() throws ERModelExceptions {
         erModelService.readData();
@@ -74,4 +75,5 @@ public class ERModelDBServiceTest {
         boolean result = erModelService.checkEmployeePayrollInSyncWithDB("Elizabeth");
         Assert.assertTrue(result);
     }
+
 }

@@ -100,4 +100,20 @@ public class DBServiceTest {
         employeePayrollService.printData(DB_IO);
         Assert.assertEquals(13, employeePayrollService.countEntries(DB_IO));
     }
+
+    @Test
+    public void given6EmployeesWhenAdded_ToDB_Using_Multithreading_InDBServiceTestclass_shouldMatchEmployeeEntries(){
+        EmployeePayrollData[] arrayOfEmps = {
+                new EmployeePayrollData(0, "Tom", "M", 100000.0, LocalDate.now()),
+                new EmployeePayrollData(0, "Deep", "M", 200000.0, LocalDate.now()),
+                new EmployeePayrollData(0, "Harry", "M", 300000.0, LocalDate.now()),
+                new EmployeePayrollData(0, "Ramesh", "M", 600000.0, LocalDate.now()),
+                new EmployeePayrollData(0, "Mukesh", "M", 1000000.0, LocalDate.now()),
+                new EmployeePayrollData(0, "Suresh", "M", 200000.0, LocalDate.now())
+        };
+        employeePayrollService.readData(DB_IO);
+        employeePayrollService.addEmployeeToPayroll_UsingDBThreads(Arrays.asList(arrayOfEmps));
+        long count = employeePayrollService.countEntries(DB_IO);
+        Assert.assertEquals(7, count);
+    }
 }

@@ -299,7 +299,7 @@ public class ERModelDBService {
                 String sql = String.format("SELECT e.emp_id, e.name, e.start, p.basic_pay " +
                         "FROM employee e " +
                         "JOIN payroll p ON e.emp_id = p.emp_id " +
-                        "WHERE e.start BETWEEN '%s' AND '%s';", fromDate, toDate);
+                        "WHERE e.start BETWEEN '%s' AND '%s' AND e.isActive = true;", fromDate, toDate);
                 ResultSet resultSet = statement.executeQuery(sql);
                 return this.executeSelectQuery(resultSet);
             } catch (SQLException e) {
@@ -315,7 +315,10 @@ public class ERModelDBService {
 
     public List<Double> calculateSumAverageMinMax() throws ERModelExceptions {
             String sql = "SELECT SUM(basic_pay), AVG(basic_pay), MIN(basic_pay), MAX(basic_pay) " +
-                         "FROM payroll;";
+                         "FROM payroll " +
+                         "JOIN employee ON payroll.emp_id = employee.emp_id " +
+                         "WHERE isActive = true " +
+                         "GROUP by isActive";
            Connection connection = this.getConnection();
            List<Double> output = new ArrayList<>();
            try(Statement statement = connection.createStatement()){
@@ -343,7 +346,9 @@ public class ERModelDBService {
         Connection connection = this.getConnection();
         try(Statement statement = connection.createStatement()){
             String sql = "SELECT e.gender, SUM(p.basic_pay), AVG(p.basic_pay), MIN(p.basic_pay), MAX(p.basic_pay) " +
-                         "FROM employee e JOIN payroll p USING (emp_id) " +
+                         "FROM employee " +
+                         "JOIN (SELECT * FROM employee WHERE isActive = true ) e ON employee.emp_id = e.emp_id " +
+                         "JOIN payroll p ON e.emp_id = p.emp_id " +
                          "GROUP BY e.gender;";
             ResultSet resultSet = statement.executeQuery(sql);
             while(resultSet.next()){
@@ -429,7 +434,7 @@ public class ERModelDBService {
             int rowAffected = 0;
             try(Statement statement = connection.createStatement()){
                 String sql = String.format("DELETE FROM employee_department_table " +
-                        "WHERE employee_id = %s", employee_id);
+                                           "WHERE employee_id = %s", employee_id);
                 rowAffected = statement.executeUpdate(sql);
             }
             return rowAffected;

@@ -25,8 +25,11 @@ public class EmployeePayrollDBService {
         return employeePayrollDBService;
     }
 
+    int connectionID = 0;
+
     private Connection getConnection() throws SQLException {
         Connection connection;
+
         System.out.println("Connecting to database: " + jdbcUrl);
         connection = DriverManager.getConnection(jdbcUrl, userName, passWord);
         System.out.println("connection is successful!!!!" + connection);
@@ -258,5 +261,105 @@ public class EmployeePayrollDBService {
             }
         }
         return employeePayrollData;
+    }
+
+    //MultiThreading addition of one employee
+    public EmployeePayrollData addEmployeeToPayroll_MulitThreadingConcept(String name, double salary,
+                                                                          LocalDate startDate,
+                                                                          String gender){
+        Integer employeeId[] = new Integer[] {-1};
+        Connection connection = null;
+        EmployeePayrollData employeePayrollData = null;
+        try{
+            connection =  this.getConnection();
+            connection.setAutoCommit(false);
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        Boolean[] isFirstProcessDone = new Boolean[] {false};
+        Connection finalConnection = connection;
+        Runnable task1 = () -> {
+            System.out.println("Employee Being added: "+Thread.currentThread().getName());
+            employeeId[0] = this.addEmployeeToPayroll(finalConnection, name, salary, startDate, gender);
+            isFirstProcessDone[0] = true;
+        };
+
+        Integer[] rowAffected = new Integer[] {0};
+        Runnable task2 = () -> {
+            System.out.println("Added in employee payroll: "+Thread.currentThread().getName());
+            rowAffected[0] = this.addToPayroll(finalConnection, employeeId[0], salary);
+        };
+
+        Thread thread1 = new Thread(task1, "Employee payroll thread: " + name);
+        Thread thread2 = new Thread(task2, "Payroll thread: " + name);
+        thread1.start();
+        while(!isFirstProcessDone[0]) {
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        if(employeeId[0] == -1)
+            return null;
+        thread2.start();
+        return new EmployeePayrollData(employeeId[0], name, salary, startDate);
+    }
+
+    private int addEmployeeToPayroll(Connection connection, String name, double salary, LocalDate startDate, String gender) {
+        int employeeId = -1;
+        try(Statement statement = connection.createStatement()){
+            String sql = String.format("INSERT INTO employee_payroll (name, gender, salary, start)VALUES " +
+                    "('%s', '%s', %s, '%s')", name, gender, salary, Date.valueOf(startDate));
+            int rowAffected = statement.executeUpdate(sql, statement.RETURN_GENERATED_KEYS);
+            if(rowAffected == 1){
+                ResultSet resultSet = statement.getGeneratedKeys();
+                if(resultSet.next()) employeeId = resultSet.getInt(1);
+            }
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        return employeeId;
+    }
+
+    private int addToPayroll(Connection connection, Integer employeeId, double salary){
+        int rowAffected = 0;
+        try(Statement statement = connection.createStatement()){
+            double deductions = salary * 0.2;
+            double taxablePay = salary - deductions;
+            double tax = taxablePay * 0.1;
+            double netPay = salary - tax;
+            String sql = String.format("INSERT INTO payroll_details " +
+                            "(employee_id, basic_pay, deductions, taxable_pay, tax, net_pay) VALUES" +
+                            "(%s, %s, %s, %s, %s, %s);",
+                    employeeId, salary, deductions, taxablePay, tax, netPay);
+            rowAffected = statement.executeUpdate(sql);
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            connection.commit();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }finally{
+            if(connection != null) {
+                try {
+                    connection.close();
+                } catch (SQLException throwables) {
+                    throwables.printStackTrace();
+                }
+            }
+        }
+        return rowAffected;
     }
 }

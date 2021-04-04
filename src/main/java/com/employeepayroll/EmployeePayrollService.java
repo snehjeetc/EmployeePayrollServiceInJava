@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.*;
 
 public class EmployeePayrollService {
-
     enum IOService{ CONSOLE_IO, FILE_IO, DB_IO, REST_IO }
     private List<EmployeePayrollData> employeePayrollList;
     private final EmployeePayrollDBService employeePayrollDBService;
@@ -77,6 +76,32 @@ public class EmployeePayrollService {
         EmployeePayrollData employeePayrollData = this.getEmployeePayrollData(name);
         if(employeePayrollData != null) employeePayrollData.salary = salary;
     }
+
+    public void updateEmployees(List<EmployeePayrollData> employeePayrollDatas) {
+        Map<Integer, Boolean> employeeUpdationStatus = new HashMap<>();
+        employeePayrollDatas.forEach(employeePayrollData -> {
+            Runnable task = () -> {
+                employeeUpdationStatus.put(employeePayrollData.hashCode(), false);
+                System.out.println("Employee being updated: " + Thread.currentThread().getName());
+                int result = employeePayrollDBService.updateEmployeeDB(employeePayrollData.name, employeePayrollData.salary);
+                if(result == 0) return;
+                EmployeePayrollData payrollData = this.getEmployeePayrollData(employeePayrollData.name);
+                if(payrollData != null) payrollData.salary = employeePayrollData.salary;
+                employeeUpdationStatus.put(employeePayrollData.hashCode(), true);
+                System.out.println("Employee updated : " + Thread.currentThread().getName());
+            };
+            Thread thread = new Thread(task, employeePayrollData.name);
+            thread.start();
+            while(employeeUpdationStatus.containsValue(false)){
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
 
     public void addEmployeeToPayroll(String name, double salary, LocalDate startDate, String gender) {
         employeePayrollList.add(employeePayrollDBService.addEmployeeToPayroll(name, salary, startDate, gender));
@@ -153,6 +178,32 @@ public class EmployeePayrollService {
     public boolean checkEmployeePayrollInSyncWithDB(String name) {
         List<EmployeePayrollData> employeePayrollDataList = employeePayrollDBService.getEmployeePayrollData(name);
         return employeePayrollDataList.get(0).equals(getEmployeePayrollData(name));
+    }
+
+    public boolean isSyncWithDB(List<EmployeePayrollData> employeePayrollDatas) {
+
+        Map<Integer, Boolean> employeeCheckStatus = new HashMap<>();
+        Map<String, Boolean> employeeCheckResult = new HashMap<>();
+        employeePayrollDatas.forEach(employeePayrollData ->{
+            Runnable task = () -> {
+                employeeCheckStatus.put(employeePayrollData.hashCode(), false);
+                employeeCheckResult.put(employeePayrollData.name,
+                                        checkEmployeePayrollInSyncWithDB(employeePayrollData.name));
+                employeeCheckStatus.put(employeePayrollData.hashCode(), true);
+            };
+            Thread thread = new Thread(task);
+            thread.start();
+        });
+        while(employeeCheckStatus.containsValue(false)){
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        if(employeeCheckResult.containsValue(false))
+            return false;
+        return true;
     }
 
     public List<String> calculateSumAverageMinMax(IOService ioService) {

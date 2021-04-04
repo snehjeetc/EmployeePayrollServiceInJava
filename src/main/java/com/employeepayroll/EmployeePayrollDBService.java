@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.Map;
 
 public class EmployeePayrollDBService {
-    private static String jdbcUrl = "jdbc:mysql://localhost:3306/employeePayrollDB?useSSL=false";
-    private static String userName = "root";
-    private static String passWord = "Rooting@1";
+    private static final String jdbcUrl = "jdbc:mysql://localhost:3306/employeePayrollDB?useSSL=false";
+    private static final String userName = "root";
+    private static final String passWord = "Rooting@1";
 
     private static EmployeePayrollDBService employeePayrollDBService;
     private PreparedStatement employeePayrollDataStatement;
@@ -24,8 +24,6 @@ public class EmployeePayrollDBService {
             employeePayrollDBService = new EmployeePayrollDBService();
         return employeePayrollDBService;
     }
-
-    int connectionID = 0;
 
     private Connection getConnection() throws SQLException {
         Connection connection;
@@ -52,10 +50,12 @@ public class EmployeePayrollDBService {
         return 0;
     }
 
-    public List<EmployeePayrollData> getEmployeePayrollData(String name) {
+    public synchronized List<EmployeePayrollData> getEmployeePayrollData(String name) {
         List<EmployeePayrollData> employeePayrollList = null;
-        if(this.employeePayrollDataStatement == null)
-            this.prepareStatementForEmployeeData();
+         {
+            if (this.employeePayrollDataStatement == null)
+                this.prepareStatementForEmployeeData();
+        }
         try{
             employeePayrollDataStatement.setString(1, name);
             ResultSet resultSet = employeePayrollDataStatement.executeQuery();
@@ -358,6 +358,91 @@ public class EmployeePayrollDBService {
                 } catch (SQLException throwables) {
                     throwables.printStackTrace();
                 }
+            }
+        }
+        return rowAffected;
+    }
+
+    public int updateEmployeeDB(String name, double salary) {
+        Connection connection = null;
+        try {
+            connection = this.getConnection();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        try {
+            connection.setAutoCommit(false);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        Connection finalConnection = connection;
+        int employeeID = this.getEmployeePayrollData(name).get(0).id;
+        Boolean[] isFirstProcessDone = new Boolean[] {false};
+        Integer[] updatedRecords = new Integer[] {0};
+
+        Runnable task = () -> {
+            isFirstProcessDone[0] = false;
+            String sqlUpdate = String.format("UPDATE employee_payroll SET salary = %s WHERE id = %s",
+                                            salary, employeeID);
+            updatedRecords[0] = this.updateEmployeeDB(finalConnection, sqlUpdate);
+            isFirstProcessDone[0] = true;
+        };
+
+        Runnable task2 = () -> {
+            double deductions = salary * 0.2;
+            double taxablePay = salary - deductions;
+            double tax = taxablePay * 0.1;
+            double netPay = salary - tax;
+            String update_sql = String.format("UPDATE payroll_details " +
+                                              "SET basic_pay = %s, deductions = %s, " +
+                                              "taxable_pay = %s, tax = %s, net_pay = %s " +
+                                              "WHERE employee_id = %s",
+                                             salary, deductions, taxablePay, tax, netPay, employeeID);
+            updatedRecords[0] = this.updateEmployeeDB(finalConnection, update_sql);
+            try {
+                finalConnection.commit();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }finally {
+                try {
+                    finalConnection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        Thread thread1 = new Thread(task);
+        Thread thread2 = new Thread(task2);
+        thread1.start();
+        while(!isFirstProcessDone[0]){
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        if(updatedRecords[0] == 0){
+            try {
+                finalConnection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            return 0;
+        }
+        thread2.start();
+        return updatedRecords[0];
+    }
+
+    private int updateEmployeeDB(Connection connection, String update_sql){
+        int rowAffected = 0;
+        try(Statement statement = connection.createStatement()){
+            rowAffected = statement.executeUpdate(update_sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException exception) {
+                exception.printStackTrace();
             }
         }
         return rowAffected;

@@ -116,4 +116,21 @@ public class DBServiceTest {
         long count = employeePayrollService.countEntries(DB_IO);
         Assert.assertEquals(7, count);
     }
+
+    @Test
+    public void when6EmployeesAreUpdated_ToDB_Using_Mulit_Threading_ShouldSyncWithDB(){
+        EmployeePayrollData[] arrayOfEmps = {
+                new EmployeePayrollData(0, "Tom", "M", 12122, LocalDate.now()),
+                new EmployeePayrollData(0, "Deep", "M", 22222.0, LocalDate.now()),
+                new EmployeePayrollData(0, "Harry", "M", 5555.0, LocalDate.now()),
+                new EmployeePayrollData(0, "Ramesh", "M", 88888.0, LocalDate.now()),
+                new EmployeePayrollData(0, "Mukesh", "M", 99999.0, LocalDate.now()),
+                new EmployeePayrollData(0, "Suresh", "M", 45234.0, LocalDate.now())
+        };
+        employeePayrollService.readData(DB_IO);
+        employeePayrollService.updateEmployees(Arrays.asList(arrayOfEmps));
+        boolean result = employeePayrollService.isSyncWithDB(Arrays.asList(arrayOfEmps));
+        employeePayrollService.printData(DB_IO);
+        Assert.assertEquals(true, result);
+    }
 }

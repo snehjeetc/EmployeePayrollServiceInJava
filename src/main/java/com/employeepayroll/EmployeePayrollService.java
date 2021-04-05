@@ -14,7 +14,7 @@ public class EmployeePayrollService {
 
     public EmployeePayrollService(List<EmployeePayrollData> empList) {
         this();
-        this.employeePayrollList = empList;
+        this.employeePayrollList = new ArrayList<>(empList);
     }
 
     public static void main(String[] args){

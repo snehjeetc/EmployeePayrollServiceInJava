@@ -1,5 +1,8 @@
 package com.employeepayroll;
 
+import com.google.gson.Gson;
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.employeepayroll.EmployeePayrollService.IOService.DB_IO;
+import static com.employeepayroll.EmployeePayrollService.IOService.REST_IO;
 
 public class DBServiceTest {
     private EmployeePayrollService employeePayrollService;
@@ -19,6 +23,12 @@ public class DBServiceTest {
     @Before
     public void init(){
         employeePayrollService = new EmployeePayrollService();
+    }
+
+    @Before
+    public void setup(){
+        RestAssured.baseURI = "http://localhost";
+        RestAssured.port = 3000;
     }
     @Test
     public void givenEmployeePayrollInDB_WhenRetrieved_ShouldMatchEmployeeCount(){
@@ -131,6 +141,23 @@ public class DBServiceTest {
         employeePayrollService.updateEmployees(Arrays.asList(arrayOfEmps));
         boolean result = employeePayrollService.isSyncWithDB(Arrays.asList(arrayOfEmps));
         employeePayrollService.printData(DB_IO);
-        Assert.assertEquals(true, result);
+        Assert.assertTrue(result);
+    }
+
+    @Test
+    public void givenEmployeeDataInJSONServer_WhenRetrieved_ShouldMatchTheCount(){
+
+        EmployeePayrollData[] arrayOfEmps = getEmployeeList();
+        EmployeePayrollService employeePayrollService_new = new EmployeePayrollService(Arrays.asList(arrayOfEmps));
+        long entries = employeePayrollService_new.countEntries(REST_IO);
+        Assert.assertEquals(2, entries);
+
+    }
+
+    private EmployeePayrollData[] getEmployeeList() {
+        Response response = RestAssured.get("/employee_payroll_datas");
+        System.out.println("Employee Payroll Entries In JSON Server: \n" + response.asString());
+        EmployeePayrollData[] arrayOfEmps = new Gson().fromJson(response.asString(), EmployeePayrollData[].class);
+        return arrayOfEmps;
     }
 }

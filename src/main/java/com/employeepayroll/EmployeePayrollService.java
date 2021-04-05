@@ -107,6 +107,12 @@ public class EmployeePayrollService {
         employeePayrollList.add(employeePayrollDBService.addEmployeeToPayroll(name, salary, startDate, gender));
     }
 
+    public void addEmployeeToPayroll(EmployeePayrollData employeePayrollData, IOService ioService){
+        if(ioService.equals(IOService.FILE_IO))
+            this.addEmployeeToPayroll(employeePayrollData.name, employeePayrollData.salary,
+                                     employeePayrollData.startDate, employeePayrollData.gender);
+        else employeePayrollList.add(employeePayrollData);
+    }
 
     public void addEmployeesToPayroll(List<EmployeePayrollData> employeePayrollDataList) {
         employeePayrollDataList.forEach(employeePayrollData -> {

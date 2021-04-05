@@ -3,6 +3,7 @@ package com.employeepayroll;
 import com.google.gson.Gson;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -152,6 +153,32 @@ public class DBServiceTest {
         long entries = employeePayrollService_new.countEntries(REST_IO);
         Assert.assertEquals(2, entries);
 
+    }
+
+    @Test
+    public void givenNewEmployee_WhenAdded_ShouldMatch_201ResponseCode_AndTheTotalExpectedCounts(){
+        EmployeePayrollService newEmployeePayrollService;
+        EmployeePayrollData[] arrayOfemps = getEmployeeList();
+        newEmployeePayrollService = new EmployeePayrollService(Arrays.asList(arrayOfemps));
+
+        EmployeePayrollData employeePayrollData = new EmployeePayrollData(0, "Mark Zuckerberg",
+                                                                            300000.0, LocalDate.now());
+        Response response = addEmployeeToJSONServer(employeePayrollData);
+        int statusCode = response.getStatusCode();
+        Assert.assertEquals(201, statusCode);
+
+        employeePayrollData = new Gson().fromJson(response.asString(), EmployeePayrollData.class);
+        newEmployeePayrollService.addEmployeeToPayroll(employeePayrollData, REST_IO);
+        long entries = newEmployeePayrollService.countEntries(REST_IO);
+        Assert.assertEquals(3, entries);
+    }
+
+    private Response addEmployeeToJSONServer(EmployeePayrollData employeePayrollData) {
+        String empJson = new Gson().toJson(employeePayrollData);
+        RequestSpecification request = RestAssured.given();
+        request.header("Content-Type", "application/json");
+        request.body(empJson);
+        return request.post("/employee_payroll_datas");
     }
 
     private EmployeePayrollData[] getEmployeeList() {

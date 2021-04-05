@@ -62,6 +62,23 @@ public class REST_IOServiceTest {
         Assert.assertEquals(6, entries);
     }
 
+    @Test
+    public void givenNewSalaryForEmployee_WhenUpdated_ShouldMatch200_Response(){
+        EmployeePayrollService employeePayrollService;
+        EmployeePayrollData[]  arrayOfEmps = getEmployeeList();
+        employeePayrollService = new EmployeePayrollService(Arrays.asList(arrayOfEmps));
+        employeePayrollService.updateEmployeeSalary("Suresh", 234230, REST_IO, null);
+        EmployeePayrollData employeePayrollData = employeePayrollService.getEmployeePayrollData("Suresh");
+
+        String empJson = new Gson().toJson(employeePayrollData);
+        RequestSpecification request = RestAssured.given();
+        request.header("Content-Type", "application/json");
+        request.body(empJson);
+        Response response = request.put("/employee_payroll_datas/" + employeePayrollData.id);
+        int statusCode = response.getStatusCode();
+        Assert.assertEquals(200, statusCode);
+    }
+
     private Response addEmployeeToJSONServer(EmployeePayrollData employeePayrollData) {
         String empJson = new Gson().toJson(employeePayrollData);
         RequestSpecification request = RestAssured.given();

@@ -69,10 +69,12 @@ public class EmployeePayrollService {
         return null;
     }
 
-    public void updateEmployeeSalary(String name, double salary, int choice){
-        int result = (choice == 1) ? employeePayrollDBService.updateEmployeeData(name, salary)
-                : employeePayrollDBService.updateEmployeeDataPreparedStatement(name, salary);
-        if(result == 0) return;
+    public void updateEmployeeSalary(String name, double salary, IOService ioService,Integer choice){
+        if(ioService.equals(IOService.DB_IO)) {
+            int result = (choice == 1) ? employeePayrollDBService.updateEmployeeData(name, salary)
+                    : employeePayrollDBService.updateEmployeeDataPreparedStatement(name, salary);
+            if (result == 0) return;
+        }
         EmployeePayrollData employeePayrollData = this.getEmployeePayrollData(name);
         if(employeePayrollData != null) employeePayrollData.salary = salary;
     }
@@ -167,7 +169,7 @@ public class EmployeePayrollService {
     }
 
 
-    private EmployeePayrollData getEmployeePayrollData(String name){
+    public EmployeePayrollData getEmployeePayrollData(String name){
         return this.employeePayrollList.stream()
                                 .filter(employeePayrollDataItem -> employeePayrollDataItem.name.equals(name))
                                 .findFirst()

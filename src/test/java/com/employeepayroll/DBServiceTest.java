@@ -37,7 +37,7 @@ public class DBServiceTest {
     public void givenNewSalaryForEmployee_WhenUpdated_UsingStatement_ShouldSyncWithDatabase(){
         List<EmployeePayrollData> employeePayrollDataList =
                 employeePayrollService.readData(DB_IO);
-        employeePayrollService.updateEmployeeSalary("Mark", 300000, 1);
+        employeePayrollService.updateEmployeeSalary("Mark", 300000, DB_IO,1);
         boolean isSync = employeePayrollService.checkEmployeePayrollInSyncWithDB("Mark");
         Assert.assertTrue(isSync);
     }
@@ -46,7 +46,7 @@ public class DBServiceTest {
     public void givenNewSalaryForEmployee_WhenUpdated_UsingPreparedStatement_ShouldSyncWithDatabase(){
         List<EmployeePayrollData> employeePayrollDataList =
                 employeePayrollService.readData(DB_IO);
-        employeePayrollService.updateEmployeeSalary("Mark", 200000, 1);
+        employeePayrollService.updateEmployeeSalary("Mark", 200000, DB_IO,1);
         boolean isSync = employeePayrollService.checkEmployeePayrollInSyncWithDB("Mark");
         Assert.assertTrue(isSync);
     }

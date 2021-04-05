@@ -26,11 +26,6 @@ public class DBServiceTest {
         employeePayrollService = new EmployeePayrollService();
     }
 
-    @Before
-    public void setup(){
-        RestAssured.baseURI = "http://localhost";
-        RestAssured.port = 3000;
-    }
     @Test
     public void givenEmployeePayrollInDB_WhenRetrieved_ShouldMatchEmployeeCount(){
         List<EmployeePayrollData> employeePayrollData =
@@ -145,46 +140,5 @@ public class DBServiceTest {
         Assert.assertTrue(result);
     }
 
-    @Test
-    public void givenEmployeeDataInJSONServer_WhenRetrieved_ShouldMatchTheCount(){
 
-        EmployeePayrollData[] arrayOfEmps = getEmployeeList();
-        EmployeePayrollService employeePayrollService_new = new EmployeePayrollService(Arrays.asList(arrayOfEmps));
-        long entries = employeePayrollService_new.countEntries(REST_IO);
-        Assert.assertEquals(2, entries);
-
-    }
-
-    @Test
-    public void givenNewEmployee_WhenAdded_ShouldMatch_201ResponseCode_AndTheTotalExpectedCounts(){
-        EmployeePayrollService newEmployeePayrollService;
-        EmployeePayrollData[] arrayOfemps = getEmployeeList();
-        newEmployeePayrollService = new EmployeePayrollService(Arrays.asList(arrayOfemps));
-
-        EmployeePayrollData employeePayrollData = new EmployeePayrollData(0, "Mark Zuckerberg",
-                                                                            300000.0, LocalDate.now());
-        Response response = addEmployeeToJSONServer(employeePayrollData);
-        int statusCode = response.getStatusCode();
-        Assert.assertEquals(201, statusCode);
-
-        employeePayrollData = new Gson().fromJson(response.asString(), EmployeePayrollData.class);
-        newEmployeePayrollService.addEmployeeToPayroll(employeePayrollData, REST_IO);
-        long entries = newEmployeePayrollService.countEntries(REST_IO);
-        Assert.assertEquals(3, entries);
-    }
-
-    private Response addEmployeeToJSONServer(EmployeePayrollData employeePayrollData) {
-        String empJson = new Gson().toJson(employeePayrollData);
-        RequestSpecification request = RestAssured.given();
-        request.header("Content-Type", "application/json");
-        request.body(empJson);
-        return request.post("/employee_payroll_datas");
-    }
-
-    private EmployeePayrollData[] getEmployeeList() {
-        Response response = RestAssured.get("/employee_payroll_datas");
-        System.out.println("Employee Payroll Entries In JSON Server: \n" + response.asString());
-        EmployeePayrollData[] arrayOfEmps = new Gson().fromJson(response.asString(), EmployeePayrollData[].class);
-        return arrayOfEmps;
-    }
 }

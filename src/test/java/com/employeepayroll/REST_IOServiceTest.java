@@ -79,6 +79,24 @@ public class REST_IOServiceTest {
         Assert.assertEquals(200, statusCode);
     }
 
+    @Test
+    public void givenEmployeeToDelete_WhenDeleted_ShouldMatch200ResponseCode_and_TheTotalNumberOfEntries(){
+        EmployeePayrollService employeePayrollService;
+        EmployeePayrollData[] employeePayrollDatas = getEmployeeList();
+        employeePayrollService = new EmployeePayrollService(Arrays.asList(employeePayrollDatas));
+
+        EmployeePayrollData employeePayrollData = employeePayrollService.getEmployeePayrollData("Suresh");
+        RequestSpecification request = RestAssured.given();
+        request.header("Content-Type", "application/json");
+        Response response = request.delete("/employee_payroll_datas/"+ employeePayrollData.id);
+        int statuscode = response.getStatusCode();
+        Assert.assertEquals(200, statuscode);
+
+        employeePayrollService.deleteEmployeePayroll(employeePayrollData.name, REST_IO);
+        long entries = employeePayrollService.countEntries(REST_IO);
+        Assert.assertEquals(5, entries);
+    }
+
     private Response addEmployeeToJSONServer(EmployeePayrollData employeePayrollData) {
         String empJson = new Gson().toJson(employeePayrollData);
         RequestSpecification request = RestAssured.given();

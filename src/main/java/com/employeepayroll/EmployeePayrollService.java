@@ -189,7 +189,6 @@ public class EmployeePayrollService {
     }
 
     public boolean isSyncWithDB(List<EmployeePayrollData> employeePayrollDatas) {
-
         Map<Integer, Boolean> employeeCheckStatus = new HashMap<>();
         Map<String, Boolean> employeeCheckResult = new HashMap<>();
         employeePayrollDatas.forEach(employeePayrollData ->{
@@ -212,6 +211,13 @@ public class EmployeePayrollService {
         if(employeeCheckResult.containsValue(false))
             return false;
         return true;
+    }
+
+    public void deleteEmployeePayroll(String name, IOService ioService) {
+        if(ioService.equals(IOService.REST_IO)){
+            EmployeePayrollData employeePayrollData = this.getEmployeePayrollData(name);
+            employeePayrollList.remove(employeePayrollData);
+        }
     }
 
     public List<String> calculateSumAverageMinMax(IOService ioService) {
